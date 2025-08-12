@@ -12,6 +12,39 @@ document.addEventListener('DOMContentLoaded', () => {
     
     let currentDesign = null; // Store current design for sharing
 
+    // Helper function to get the correct image URL
+    function getImageUrl(imagePath) {
+        // If it's already a full URL (http/https), return as is
+        if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+            return imagePath;
+        }
+        
+        // If it starts with 'images/', it's a local file
+        if (imagePath.startsWith('images/')) {
+            return imagePath;
+        }
+        
+        // If it's just a filename, assume it's in the images folder
+        if (!imagePath.includes('/') && !imagePath.startsWith('http')) {
+            return `images/${imagePath}`;
+        }
+        
+        return imagePath;
+    }
+
+    // Helper function to get full URL for sharing
+    function getFullImageUrl(imagePath) {
+        const imageUrl = getImageUrl(imagePath);
+        
+        // If it's a local image, make it a full URL
+        if (!imageUrl.startsWith('http')) {
+            const currentUrl = window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '/');
+            return currentUrl + imageUrl;
+        }
+        
+        return imageUrl;
+    }
+
     // Fetch designs from a JSON file
     fetch('designs.json')
         .then(response => response.json())
@@ -19,8 +52,9 @@ document.addEventListener('DOMContentLoaded', () => {
             designs.forEach(design => {
                 const designCard = document.createElement('div');
                 designCard.classList.add('design-card');
+                const imageUrl = getImageUrl(design.image);
                 designCard.innerHTML = `
-                    <img src="${design.image}" alt="${design.name}">
+                    <img src="${imageUrl}" alt="${design.name}" onerror="this.src='https://via.placeholder.com/400x300?text=Image+Not+Found'">
                     <div class="design-info">
                         <h3>${design.name}</h3>
                         <p>${design.description || 'Complete design package'}</p>
@@ -60,13 +94,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function openModal(design) {
         currentDesign = design; // Store for sharing
-        modalImage.src = design.image;
+        const imageUrl = getImageUrl(design.image);
+        modalImage.src = imageUrl;
         modalTitle.textContent = design.name;
         modalPrice.textContent = `₹${design.price}`;
         
         // Create a detailed message with design information and image link
-        const currentUrl = window.location.origin + window.location.pathname;
-        const designLink = design.image.startsWith('http') ? design.image : currentUrl + design.image;
+        const designLink = getFullImageUrl(design.image);
         
         const message = `🎨 Hi! I'm interested in buying this design:
 
@@ -91,8 +125,7 @@ Thank you! 🙏`;
 
     // Share design functionality
     function shareDesign(design) {
-        const currentUrl = window.location.origin + window.location.pathname;
-        const designLink = design.image.startsWith('http') ? design.image : currentUrl + design.image;
+        const designLink = getFullImageUrl(design.image);
         
         const shareData = {
             title: `${design.name} - Saini Printing Press`,
