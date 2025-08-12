@@ -668,6 +668,45 @@ nav {
     background: #128C7E;
 }
 
+.modal-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+}
+
+.share-design {
+    background: #6366f1;
+    color: white;
+    padding: 1rem 2rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: Inter, sans-serif;
+}
+
+.share-design:hover {
+    background: #4f46e5;
+    transform: translateY(-2px);
+}
+
+@media (max-width: 480px) {
+    .modal-buttons {
+        flex-direction: column;
+    }
+    
+    .buy-now, .share-design {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
 /* Footer */
 footer {
     background: #1e293b;

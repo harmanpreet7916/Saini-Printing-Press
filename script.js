@@ -5,9 +5,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalTitle = document.getElementById('modal-title');
     const modalPrice = document.getElementById('modal-price');
     const buyNowButton = document.getElementById('buy-now-button');
+    const shareDesignButton = document.getElementById('share-design-button');
     const closeButton = document.querySelector('.close-button');
 
     const yourWhatsAppNumber = '917591013000'; // Replace with your WhatsApp number including country code without '+'
+    
+    let currentDesign = null; // Store current design for sharing
 
     // Fetch designs from a JSON file
     fetch('designs.json')
@@ -56,11 +59,29 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
     function openModal(design) {
+        currentDesign = design; // Store for sharing
         modalImage.src = design.image;
         modalTitle.textContent = design.name;
         modalPrice.textContent = `₹${design.price}`;
         
-        const message = `Hi, I'm interested in buying the "${design.name}" design for ₹${design.price}.`;
+        // Create a detailed message with design information and image link
+        const currentUrl = window.location.origin + window.location.pathname;
+        const designLink = design.image.startsWith('http') ? design.image : currentUrl + design.image;
+        
+        const message = `🎨 Hi! I'm interested in buying this design:
+
+📋 *Design Details:*
+• Name: ${design.name}
+• Price: ₹${design.price}
+${design.description ? `• Description: ${design.description}` : ''}
+
+🖼️ *Design Image:*
+${designLink}
+
+📱 Please confirm availability and share any additional details.
+
+Thank you! 🙏`;
+        
         const whatsappUrl = `https://wa.me/${yourWhatsAppNumber}?text=${encodeURIComponent(message)}`;
         
         buyNowButton.href = whatsappUrl;
@@ -68,10 +89,90 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.style.overflow = 'hidden';
     }
 
+    // Share design functionality
+    function shareDesign(design) {
+        const currentUrl = window.location.origin + window.location.pathname;
+        const designLink = design.image.startsWith('http') ? design.image : currentUrl + design.image;
+        
+        const shareData = {
+            title: `${design.name} - Saini Printing Press`,
+            text: `Check out this amazing ${design.name} design for just ₹${design.price}!`,
+            url: designLink
+        };
+
+        // Try native Web Share API first (mobile devices)
+        if (navigator.share) {
+            navigator.share(shareData).catch(err => {
+                console.log('Error sharing:', err);
+                fallbackShare(design, designLink);
+            });
+        } else {
+            // Fallback for desktop
+            fallbackShare(design, designLink);
+        }
+    }
+
+    // Fallback share options
+    function fallbackShare(design, designLink) {
+        const shareText = `🎨 Check out this amazing design: ${design.name} for just ₹${design.price}!\n\n🖼️ View design: ${designLink}\n\n📱 Order now: https://wa.me/${yourWhatsAppNumber}`;
+        
+        // Copy to clipboard
+        navigator.clipboard.writeText(shareText).then(() => {
+            // Show success message
+            showShareMessage('Design link copied to clipboard! 📋');
+        }).catch(() => {
+            // If clipboard fails, show the text in a popup
+            const popup = window.open('', '_blank', 'width=400,height=300');
+            popup.document.write(`
+                <html>
+                    <head><title>Share Design</title></head>
+                    <body style="font-family: Arial; padding: 20px;">
+                        <h3>Share this design:</h3>
+                        <textarea readonly style="width: 100%; height: 150px;">${shareText}</textarea>
+                        <p><small>Copy the text above to share</small></p>
+                    </body>
+                </html>
+            `);
+        });
+    }
+
+    // Show share success message
+    function showShareMessage(message) {
+        const messageDiv = document.createElement('div');
+        messageDiv.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #25D366;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 10001;
+            font-family: Inter, sans-serif;
+            font-size: 14px;
+        `;
+        messageDiv.textContent = message;
+        document.body.appendChild(messageDiv);
+        
+        setTimeout(() => {
+            messageDiv.remove();
+        }, 3000);
+    }
+
     closeButton.addEventListener('click', () => {
         modal.style.display = 'none';
         document.body.style.overflow = 'auto';
     });
+
+    // Add event listener for share button
+    if (shareDesignButton) {
+        shareDesignButton.addEventListener('click', () => {
+            if (currentDesign) {
+                shareDesign(currentDesign);
+            }
+        });
+    }
 
     window.addEventListener('click', (event) => {
         if (event.target == modal) {
